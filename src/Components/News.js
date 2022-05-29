@@ -1,103 +1,79 @@
-import React, { Component } from 'react'
+import React, { useState,useEffect } from 'react'
 import NewsItem from './NewsItem'
 import LoadingGif from './LoadingGif'
 import PropTypes from 'prop-types'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
-
-export default class News extends Component {
+const News = (props) => {
     
-    constructor(props){
-        super(props);
-        // console.log("this is a constructor");
-        this.state={
-            articles : [],
-            loading: false,
-            page: 0,
-            totalResults: 0
-        }
-        document.title = `${this.capitalize(this.props.category)} - NewsMonger`
-    }
+    const [articles, setArticles] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [page, setPage] = useState(0)
+    const [totalResults, setTotalResults] = useState(0)
 
-    static defaultProps = {
-        category: "business",
-    }
-
-    static propTypes = {
-        category: PropTypes.string
-    }
-
-    capitalize = (string)=>{
+    const capitalize = (string)=>{
         return string[0].toUpperCase()+string.slice(1)
     }
 
-    async componentDidMount(){
-            this.updateNews();
-        }
+    useEffect(() => {
+        document.title = `${capitalize(props.category)} - NewsMonger`
+        updateNews();
+        // eslint-disable-next-line
+    },[])
             
-    async updateNews(){
-        this.props.setProgress(10);
-        const url=`https://newsdata.io/api/1/news?apikey=${this.props.apiKey}&language=en&category=${this.props.category}&page=${this.state.page}`;
-        this.setState({loading:true})
+    const updateNews = async() =>{
+        props.setProgress(10);
+        const url=`https://newsdata.io/api/1/news?apikey=${props.apiKey}&language=en&category=${props.category}&page=${page}`;
+        setLoading(true)
         let data = await fetch(url);
-        this.props.setProgress(40)
+        props.setProgress(40)
         let parsedData = await data.json();
-        this.props.setProgress(70)
-
-        this.setState({
-            articles: parsedData.results,
-            totalResults: parsedData.totalResults,
-            loading: false
-        })
-        this.props.setProgress(100)
+        props.setProgress(70)
+        setArticles(parsedData.results)
+        setLoading(false)
+        setTotalResults(parsedData.totalResults)
+        props.setProgress(100)
     }
 
-    fetchMoreData = async() => {
-        // this.setState({page: this.state.page+1})
-        // console.log(this.state.page)
-        const url=`https://newsdata.io/api/1/news?apikey=${this.props.apiKey}&language=en&category=${this.props.category}&page=${this.state.page+1}`;
-        // this.setState({loading:true})
+    const fetchMoreData = async() => {
+        const url=`https://newsdata.io/api/1/news?apikey=${props.apiKey}&language=en&category=${props.category}&page=${page+1}`;
+        setPage(page+1)
         let data = await fetch(url);
         let parsedData = await data.json();
-        this.setState({
-            articles: this.state.articles.concat(parsedData.results),
-            loading: false,
-            page: this.state.page+1
-        })
+        setArticles(articles.concat(parsedData.results))
+        setTotalResults(parsedData.totalResults)
     };
 
-    handleNextButton = async()=>{
-        await this.setState({page: this.state.page + 1});
-        this.updateNews();
-    }
-
-    handlePrevButton= async()=>{
-        await this.setState({page: this.state.page - 1});
-        this.updateNews();
-    }
-
-    render() {
-         return (
-            <>
-                <h2><div className="text-center my-3">NewsMonger - {this.capitalize(this.props.category)} Headlines</div></h2>
-                {this.state.loading && <LoadingGif/>}
-                <InfiniteScroll
-                    dataLength={this.state.articles.length}
-                    next={this.fetchMoreData}
-                    hasMore={this.state.articles.length!==this.state.totalResults}
-                    loader={<LoadingGif/>}
-                >
-                    <div className="container my-3">
-                    <div className="row">
-                    {this.state.articles.map((element,index)=>{
-                        return <div className="col-md-4" key={index}>
-                        <NewsItem title={element.title} description={element.description} imageUrl={element.image_url} url= {element.link} date={element.pubDate} creator={element.creator} source= {element.source_id}/>
-                        </div>
-                    })}
-                    </div>       
-                    </div>
-                </InfiniteScroll>
-            </> 
+    return (
+    <>
+        <h2 style={{marginTop: "87px"}}><div className="text-center my-3" >NewsMonger - {capitalize(props.category)} Headlines</div></h2>
+        {loading && <LoadingGif/>}
+        <InfiniteScroll
+            dataLength={articles.length}
+            next={fetchMoreData}
+            hasMore={articles.length!==totalResults}
+            loader={<LoadingGif/>}
+        >
+            <div className="container my-3">
+            <div className="row">
+            {articles.map((element,index)=>{
+                return <div className="col-md-4" key={index}>
+                <NewsItem title={element.title} description={element.description} imageUrl={element.image_url} url= {element.link} date={element.pubDate} creator={element.creator} source= {element.source_id}/>
+                </div>
+            })}
+            </div>       
+            </div>
+        </InfiniteScroll>
+    </> 
     )
-  }
 }
+
+News.defaultProps = {
+    category: "business",
+}
+
+News.propTypes = {
+    category: PropTypes.string
+}
+
+export default News
