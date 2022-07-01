@@ -1,5 +1,7 @@
 # Getting Started with Create React App
 
+News Monger is a site which contains latest news around the world, whether it is of any genre that news can be found on News Monger.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
